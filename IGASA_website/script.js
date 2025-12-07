@@ -20,16 +20,14 @@ const db = getDatabase(app);
 /* -------------------- VARIABLES -------------------- */
 let currentScores = { Nexara: 0, Ignara: 0, Zonara: 0, Lunara: 0 };
 let allResultsData = {};
-let isAdmin = false; // SECURE DEFAULT
-const ADMIN_PASSWORD = "1234"; // CHANGE THIS!
+let isAdmin = false; 
+const ADMIN_PASSWORD = "1234"; // CHANGE THIS PASSWORD
 const POINTS = { first: 10, second: 7, third: 5 };
 
 /* -------------------- 1. EMERGENCY LOCK (RUNS IMMEDIATELY) -------------------- */
-// This runs the moment the page loads to force-lock everything
 document.addEventListener("DOMContentLoaded", function() {
-    console.log("System Status: LOCKED");
     isAdmin = false;
-    enableEditing(false); // FORCE DISABLE EDITING
+    enableEditing(false); // FORCE DISABLE EDITING ON LOAD
 });
 
 /* -------------------- 2. DATABASE LISTENERS -------------------- */
@@ -56,8 +54,7 @@ onValue(ref(db, 'events'), (snapshot) => {
             div.innerHTML = `<div class="event-date">${item.date}</div><div class="event-time">${item.time}</div><div class="event-desc">${item.desc}</div>`;
             list.appendChild(div);
         });
-        // Important: Lock the new elements immediately after they appear
-        if(!isAdmin) enableEditing(false);
+        if(!isAdmin) enableEditing(false); // Lock new items
     }
 });
 
@@ -96,8 +93,14 @@ window.toggleAdminMode = function() {
         const pass = prompt("Enter Admin Password:");
         if (pass === ADMIN_PASSWORD) { 
             isAdmin = true;
-            document.querySelector('.admin-controls').classList.add('unlocked');
+            
+            // FORCE SHOW BUTTONS (This brings back your "options")
+            document.getElementById('add-res-btn').style.display = 'inline-block';
+            document.getElementById('add-evt-btn').style.display = 'inline-block';
+            document.getElementById('save-btn').style.display = 'inline-block';
+            document.getElementById('reset-btn').style.display = 'inline-block';
             document.getElementById('admin-lock-btn').innerText = "🔓 LOGOUT";
+            
             enableEditing(true);
             alert("Admin Mode Unlocked");
         } else {
@@ -105,20 +108,22 @@ window.toggleAdminMode = function() {
         }
     } else {
         isAdmin = false;
-        document.querySelector('.admin-controls').classList.remove('unlocked');
-        document.getElementById('admin-lock-btn').innerText = "🔒 ADMIN";
-        enableEditing(false);
-        location.reload(); // Refresh to lock everything
+        // RELOAD TO LOCK EVERYTHING
+        location.reload(); 
     }
 };
 
-// THIS IS THE FUNCTION THAT PHYSICALLY LOCKS THE TEXT
 function enableEditing(enable) {
     const editables = document.querySelectorAll('.wing-score, .event-date, .event-time, .event-desc, .comp-title');
     editables.forEach(el => {
-        el.contentEditable = enable ? "true" : "false"; // Explicitly set string "false"
-        if(enable) el.classList.add('editable-active');
-        else el.classList.remove('editable-active');
+        el.contentEditable = enable ? "true" : "false";
+        if(enable) {
+            el.classList.add('editable-active');
+            el.style.pointerEvents = "auto"; // Allow clicking
+        } else {
+            el.classList.remove('editable-active');
+            el.style.pointerEvents = "none"; // Block clicking
+        }
     });
 }
 
@@ -215,7 +220,7 @@ window.closeModal = function() { document.getElementById('addModal').style.displ
 window.pushToFirebase = function() { alert("Data is already live!"); };
 window.resetData = function() { if(confirm("DELETE ALL DATA?")) { set(ref(db, 'scores'), {Nexara:0,Ignara:0,Zonara:0,Lunara:0}); set(ref(db,'results'),null); set(ref(db,'events'),null); location.reload(); }};
 
-// BACKGROUND ANIMATION
+/* -------------------- 7. BACKGROUND ANIMATION (BUBBLES) -------------------- */
 const canvas = document.getElementById('bg-canvas');
 if(canvas){
     const ctx=canvas.getContext('2d'); let w,h,p=[];
