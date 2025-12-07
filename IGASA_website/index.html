@@ -12,8 +12,9 @@
 
     <div class="header">
         <div class="side-logo"> 
-            <img src="https://placehold.co/100x100/png?text=Left" alt="Left Logo" class="logo-img"> 
+            <img src="left-logo.png" alt="Left Logo" class="logo-img"> 
         </div>
+
         <div class="title-container">
             <div class="main-logo"> 
                 <img src="kun fayakun logo.png" alt="Main Logo" class="logo-img"> 
@@ -21,16 +22,17 @@
             <div class="fest-name">Imam Gazzali Academy Students' Association</div>
             <div class="tagline">YAKUN IGASA FEST 2K25</div>
         </div>
+
         <div class="side-logo"> 
-            <img src="https://placehold.co/100x100/png?text=Right" alt="Right Logo" class="logo-img"> 
+            <img src="right-logo.png" alt="Right Logo" class="logo-img"> 
         </div>
     </div>
 
     <div class="scoreboard" id="scoreboard-container">
-        <div class="wing-box nexara"><h3 class="wing-name">Nexara</h3><div class="wing-score" contenteditable="false">1200</div></div>
-        <div class="wing-box ignara"><h3 class="wing-name">Ignara</h3><div class="wing-score" contenteditable="false">1150</div></div>
-        <div class="wing-box sonara"><h3 class="wing-name">Zonara</h3><div class="wing-score" contenteditable="false">980</div></div>
-        <div class="wing-box lunara"><h3 class="wing-name">Lunara</h3><div class="wing-score" contenteditable="false">1300</div></div>
+        <div class="wing-box nexara"><h3 class="wing-name">Nexara</h3><div class="wing-score" contenteditable="false">0</div></div>
+        <div class="wing-box ignara"><h3 class="wing-name">Ignara</h3><div class="wing-score" contenteditable="false">0</div></div>
+        <div class="wing-box sonara"><h3 class="wing-name">Zonara</h3><div class="wing-score" contenteditable="false">0</div></div>
+        <div class="wing-box lunara"><h3 class="wing-name">Lunara</h3><div class="wing-score" contenteditable="false">0</div></div>
     </div>
 
     <div class="tabs-nav">
@@ -54,12 +56,7 @@
         <div class="content-box">
             <h2 class="section-title">Event Schedule</h2>
             <div id="events-list">
-                <div class="event-item">
-                    <div class="event-date" contenteditable="false">Jan 10</div>
-                    <div class="event-time" contenteditable="false">09:00 AM</div>
-                    <div class="event-desc" contenteditable="false">Opening Ceremony</div>
                 </div>
-            </div>
         </div>
     </div>
 
@@ -74,34 +71,43 @@
     <div id="addModal" class="modal">
         <div class="modal-content">
             <h3 id="modal-title" style="color:var(--neon-red); text-align:center; margin:0;">ADD</h3>
+            
             <div id="result-inputs" style="display:none; flex-direction:column; gap:10px;">
                 <label style="color:#aaa; font-size:0.9em;">Select Section:</label>
                 <select id="new-section" class="modal-select">
-                    <option value="list-general">General</option><option value="list-senior">Senior</option><option value="list-junior">Junior</option><option value="list-subjunior">Sub Junior</option>
+                    <option value="list-general">General</option>
+                    <option value="list-senior">Senior</option>
+                    <option value="list-junior">Junior</option>
+                    <option value="list-subjunior">Sub Junior</option>
                 </select>
                 <input type="text" id="new-title" class="modal-input" placeholder="Program Name">
                 <input type="text" id="new-cat" class="modal-input" placeholder="Category (e.g. Stage)">
+                
                 <h4 style="margin:5px 0 0 0; color:#aaa; font-size:0.9em;">1st Place:</h4>
                 <div class="input-group">
                     <select id="new-rank1" class="modal-select"><option value="Nexara">Nexara</option><option value="Ignara">Ignara</option><option value="Zonara">Zonara</option><option value="Lunara">Lunara</option></select>
                     <input type="text" id="name-1" class="modal-input" placeholder="Name"><input type="text" id="chest-1" class="modal-input" placeholder="Chest No" style="width:80px;">
                 </div>
+                
                 <h4 style="margin:5px 0 0 0; color:#aaa; font-size:0.9em;">2nd Place:</h4>
                 <div class="input-group">
                     <select id="new-rank2" class="modal-select"><option value="Nexara">Nexara</option><option value="Ignara">Ignara</option><option value="Zonara">Zonara</option><option value="Lunara">Lunara</option></select>
                     <input type="text" id="name-2" class="modal-input" placeholder="Name"><input type="text" id="chest-2" class="modal-input" placeholder="Chest No" style="width:80px;">
                 </div>
+                
                 <h4 style="margin:5px 0 0 0; color:#aaa; font-size:0.9em;">3rd Place:</h4>
                 <div class="input-group">
                     <select id="new-rank3" class="modal-select"><option value="Nexara">Nexara</option><option value="Ignara">Ignara</option><option value="Zonara">Zonara</option><option value="Lunara">Lunara</option></select>
                     <input type="text" id="name-3" class="modal-input" placeholder="Name"><input type="text" id="chest-3" class="modal-input" placeholder="Chest No" style="width:80px;">
                 </div>
             </div>
+
             <div id="event-inputs" style="display:none; flex-direction:column; gap:10px;">
                 <input type="text" id="new-date" class="modal-input" placeholder="Date (e.g. Jan 10)">
                 <input type="text" id="new-time" class="modal-input" placeholder="Time (e.g. 10:00 AM)">
                 <input type="text" id="new-desc" class="modal-input" placeholder="Event Description">
             </div>
+
             <div class="modal-actions">
                 <button class="modal-btn" style="background:#333; color:#fff;" onclick="window.closeModal()">Cancel</button>
                 <button class="modal-btn btn-confirm" onclick="window.confirmAdd()">Add</button>
