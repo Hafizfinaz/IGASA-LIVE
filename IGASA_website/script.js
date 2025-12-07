@@ -1,8 +1,8 @@
 /* -------------------- FIREBASE IMPORTS -------------------- */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getDatabase, ref, set, onValue, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-/* -------------------- YOUR FIREBASE CONFIG -------------------- */
+/* -------------------- CONFIG -------------------- */
 const firebaseConfig = {
   apiKey: "AIzaSyDAIjT7yNtQqYiXXUiSKpIneuC0GvUAUms",
   authDomain: "igasa-fest.firebaseapp.com",
@@ -14,262 +14,214 @@ const firebaseConfig = {
   measurementId: "G-NP9WMJKJKH"
 };
 
-/* -------------------- INITIALIZE FIREBASE -------------------- */
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-/* -------------------- ADMIN SETTINGS -------------------- */
-const ADMIN_PASSWORD = "yakun123igasa"; // CHANGE THIS PASSWORD!
-let isAdmin = false;
+/* -------------------- VARIABLES -------------------- */
+let currentScores = { Nexara: 0, Ignara: 0, Zonara: 0, Lunara: 0 };
+let allResultsData = {};
+let isAdmin = false; // SECURE DEFAULT
+const ADMIN_PASSWORD = "1234"; // CHANGE THIS!
+const POINTS = { first: 10, second: 7, third: 5 };
 
-/* -------------------- 1. LISTEN LIVE FOR DATABASE CHANGES -------------------- */
-onValue(ref(db), (snapshot) => {
+/* -------------------- 1. EMERGENCY LOCK (RUNS IMMEDIATELY) -------------------- */
+// This runs the moment the page loads to force-lock everything
+document.addEventListener("DOMContentLoaded", function() {
+    console.log("System Status: LOCKED");
+    isAdmin = false;
+    enableEditing(false); // FORCE DISABLE EDITING
+});
+
+/* -------------------- 2. DATABASE LISTENERS -------------------- */
+onValue(ref(db, 'scores'), (snapshot) => {
     const data = snapshot.val();
-    if (data && !isAdmin) { 
-        if(data.scores) document.getElementById('scoreboard-container').innerHTML = data.scores;
-        if(data.results) document.getElementById('results-main-container').innerHTML = data.results;
-        if(data.events) document.getElementById('events-list').innerHTML = data.events;
+    if (data) { currentScores = data; updateScoreboardDisplay(); }
+});
+
+onValue(ref(db, 'results'), (snapshot) => {
+    const data = snapshot.val();
+    allResultsData = data || {};
+    clearAllLists();
+    if (data) { Object.values(data).forEach(item => addResultHTML(item)); }
+});
+
+onValue(ref(db, 'events'), (snapshot) => {
+    const data = snapshot.val();
+    const list = document.getElementById("events-list");
+    list.innerHTML = "";
+    if (data) {
+        Object.values(data).forEach(item => {
+            const div = document.createElement("div");
+            div.className = "event-item";
+            div.innerHTML = `<div class="event-date">${item.date}</div><div class="event-time">${item.time}</div><div class="event-desc">${item.desc}</div>`;
+            list.appendChild(div);
+        });
+        // Important: Lock the new elements immediately after they appear
+        if(!isAdmin) enableEditing(false);
     }
 });
 
-/* -------------------- 2. PUSH DATA TO FIREBASE -------------------- */
-window.pushToFirebase = function() {
-    if (!isAdmin) return;
+/* -------------------- 3. DISPLAY LOGIC -------------------- */
+function updateScoreboardDisplay() {
+    if(document.querySelector('.nexara .wing-score')) document.querySelector('.nexara .wing-score').innerText = currentScores.Nexara || 0;
+    if(document.querySelector('.ignara .wing-score')) document.querySelector('.ignara .wing-score').innerText = currentScores.Ignara || 0;
+    if(document.querySelector('.sonara .wing-score')) document.querySelector('.sonara .wing-score').innerText = currentScores.Zonara || 0;
+    if(document.querySelector('.lunara .wing-score')) document.querySelector('.lunara .wing-score').innerText = currentScores.Lunara || 0;
+}
 
-    set(ref(db), {
-        scores: document.getElementById('scoreboard-container').innerHTML,
-        results: document.getElementById('results-main-container').innerHTML,
-        events: document.getElementById('events-list').innerHTML
-    })
-    .then(() => alert("DATA PUBLISHED LIVE!"))
-    .catch((err) => alert("Error: " + err));
-};
+function clearAllLists() {
+    ['list-general', 'list-senior', 'list-junior', 'list-subjunior'].forEach(id => {
+        document.getElementById(id).innerHTML = "";
+    });
+}
 
-/* -------------------- ADMIN LOGIN / LOGOUT -------------------- */
+function addResultHTML(data) {
+    const container = document.getElementById(data.sectionId);
+    if (!container) return;
+    const div = document.createElement("div");
+    div.className = "result-item";
+    div.innerHTML = `
+        <div class="res-header"><span class="res-title">${data.program}</span><span class="res-cat">${data.category}</span></div>
+        <div class="res-winners">
+            <div class="winner-row gold">🥇 <b>${data.first.wing}</b> - ${data.first.name} (${data.first.chest})</div>
+            <div class="winner-row silver">🥈 <b>${data.second.wing}</b> - ${data.second.name} (${data.second.chest})</div>
+            <div class="winner-row bronze">🥉 <b>${data.third.wing}</b> - ${data.third.name} (${data.third.chest})</div>
+        </div>`;
+    container.appendChild(div);
+}
+
+/* -------------------- 4. ADMIN & SECURITY -------------------- */
 window.toggleAdminMode = function() {
-    if (!isAdmin) {
-        let pass = prompt("Enter Admin Password:");
-        if (pass === ADMIN_PASSWORD) {
+    if(!isAdmin) {
+        const pass = prompt("Enter Admin Password:");
+        if (pass === ADMIN_PASSWORD) { 
             isAdmin = true;
+            document.querySelector('.admin-controls').classList.add('unlocked');
             document.getElementById('admin-lock-btn').innerText = "🔓 LOGOUT";
-            document.getElementById('save-btn').style.display = "block";
-            document.getElementById('add-res-btn').style.display = "block";
-            document.getElementById('add-evt-btn').style.display = "block";
-            document.getElementById('reset-btn').style.display = "block";
             enableEditing(true);
-            alert("Admin Mode Active.");
-        } else { alert("Wrong Password!"); }
+            alert("Admin Mode Unlocked");
+        } else {
+            alert("Wrong Password");
+        }
     } else {
         isAdmin = false;
+        document.querySelector('.admin-controls').classList.remove('unlocked');
         document.getElementById('admin-lock-btn').innerText = "🔒 ADMIN";
-        document.getElementById('save-btn').style.display = "none";
-        document.getElementById('add-res-btn').style.display = "none";
-        document.getElementById('add-evt-btn').style.display = "none";
-        document.getElementById('reset-btn').style.display = "none";
         enableEditing(false);
-        location.reload();
+        location.reload(); // Refresh to lock everything
     }
 };
 
+// THIS IS THE FUNCTION THAT PHYSICALLY LOCKS THE TEXT
 function enableEditing(enable) {
-    const selectors = '.wing-score, .comp-title, .comp-cat, .w-house, .w-name, .w-chest, .event-date, .event-time, .event-desc';
-    const editables = document.querySelectorAll(selectors);
-
+    const editables = document.querySelectorAll('.wing-score, .event-date, .event-time, .event-desc, .comp-title');
     editables.forEach(el => {
-        el.contentEditable = enable;
-        if (enable) el.classList.add('editable-active');
+        el.contentEditable = enable ? "true" : "false"; // Explicitly set string "false"
+        if(enable) el.classList.add('editable-active');
         else el.classList.remove('editable-active');
     });
 }
 
-/* -------------------- RESET DATABASE -------------------- */
-window.resetData = function() {
-    if (confirm("Reset database?")) {
-        set(ref(db), null);
-        location.reload();
-    }
+/* -------------------- 5. ADD DATA -------------------- */
+let currentMode = "result";
+
+window.confirmAdd = function() {
+    if (currentMode === 'result') saveNewResult();
+    else saveNewEvent();
+    window.closeModal();
 };
 
-/* -------------------- UI: TABS -------------------- */
-window.openTab = function(tabName) {
-    var i, x = document.getElementsByClassName("tab-content"), buttons = document.getElementsByClassName("tab-btn");
-
-    for (i = 0; i < x.length; i++) { 
-        x[i].style.display = "none"; 
-        x[i].classList.remove("active"); 
-    }
-
-    for (i = 0; i < buttons.length; i++) { 
-        buttons[i].classList.remove("active"); 
-    }
-
-    document.getElementById(tabName).style.display = "block";
-    const clickedBtn = Array.from(buttons).find(b => b.textContent.toLowerCase().includes(tabName.substring(0,3)));
-    if(clickedBtn) clickedBtn.classList.add("active");
-};
-
-/* -------------------- MODAL: ADD RESULT / EVENT -------------------- */
-let currentMode = '';
-
-window.openModal = function(mode) { 
-    currentMode = mode;
-    document.getElementById('addModal').style.display = "flex";
-
-    if (mode === 'result') {
-        document.getElementById('modal-title').innerText = "ADD RESULT";
-        document.getElementById('result-inputs').style.display = "flex";
-        document.getElementById('event-inputs').style.display = "none";
-    } else {
-        document.getElementById('modal-title').innerText = "ADD EVENT";
-        document.getElementById('result-inputs').style.display = "none";
-        document.getElementById('event-inputs').style.display = "flex";
-    }
-};
-
-window.closeModal = function() {
-    document.getElementById('addModal').style.display = "none";
-};
-
-window.confirmAdd = function() { 
-    if (currentMode === 'result') addNewResult(); 
-    else addNewEvent(); 
-};
-
-/* -------------------- ADD NEW RESULT -------------------- */
-function addNewResult() {
+function saveNewResult() {
     const sectionId = document.getElementById('new-section').value;
-    const t = document.getElementById('new-title').value;
-    const c = document.getElementById('new-cat').value;
+    const program = document.getElementById('new-title').value;
+    const category = document.getElementById('new-cat').value;
+    
+    const r1 = { wing: document.getElementById('new-rank1').value, name: document.getElementById('name-1').value, chest: document.getElementById('chest-1').value };
+    const r2 = { wing: document.getElementById('new-rank2').value, name: document.getElementById('name-2').value, chest: document.getElementById('chest-2').value };
+    const r3 = { wing: document.getElementById('new-rank3').value, name: document.getElementById('name-3').value, chest: document.getElementById('chest-3').value };
 
-    const h1 = document.getElementById('new-rank1').value;
-    const n1 = document.getElementById('name-1').value || "Name";
-    const ch1 = document.getElementById('chest-1').value ? `(C:${document.getElementById('chest-1').value})` : "";
+    if(!program) return alert("Please enter Program Name");
 
-    const h2 = document.getElementById('new-rank2').value;
-    const n2 = document.getElementById('name-2').value || "Name";
-    const ch2 = document.getElementById('chest-2').value ? `(C:${document.getElementById('chest-2').value})` : "";
+    if (r1.wing) currentScores[r1.wing] = (currentScores[r1.wing] || 0) + POINTS.first;
+    if (r2.wing) currentScores[r2.wing] = (currentScores[r2.wing] || 0) + POINTS.second;
+    if (r3.wing) currentScores[r3.wing] = (currentScores[r3.wing] || 0) + POINTS.third;
 
-    const h3 = document.getElementById('new-rank3').value;
-    const n3 = document.getElementById('name-3').value || "Name";
-    const ch3 = document.getElementById('chest-3').value ? `(C:${document.getElementById('chest-3').value})` : "";
-
-    if(!t) return alert("Enter Name");
-
-    const newRow = `
-    <div class="comp-row">
-        <div class="comp-info">
-            <div class="comp-title" contenteditable="true">${t}</div>
-            <div class="comp-cat" contenteditable="true">${c}</div>
-        </div>
-        <div class="comp-winners">
-            <div class="winner-line rank-1"><span class="w-rank">1st:</span> <span class="w-house" contenteditable="true">${h1}</span> - <span class="w-name" contenteditable="true">${n1}</span> <span class="w-chest" contenteditable="true">${ch1}</span></div>
-            <div class="winner-line rank-2"><span class="w-rank">2nd:</span> <span class="w-house" contenteditable="true">${h2}</span> - <span class="w-name" contenteditable="true">${n2}</span> <span class="w-chest" contenteditable="true">${ch2}</span></div>
-            <div class="winner-line rank-3"><span class="w-rank">3rd:</span> <span class="w-house" contenteditable="true">${h3}</span> - <span class="w-name" contenteditable="true">${n3}</span> <span class="w-chest" contenteditable="true">${ch3}</span></div>
-        </div>
-    </div>`;
-
-    document.getElementById(sectionId).insertAdjacentHTML('afterbegin', newRow);
-    window.openTab('results');
-    finalizeAdd(sectionId);
+    push(ref(db, 'results'), { sectionId, program, category, first: r1, second: r2, third: r3 });
+    set(ref(db, 'scores'), currentScores);
+    alert("Saved!");
 }
 
-/* -------------------- ADD EVENT -------------------- */
-function addNewEvent() {
-    const date = document.getElementById('new-date').value;
-    const time = document.getElementById('new-time').value;
-    const desc = document.getElementById('new-desc').value;
-
-    if(!desc) return alert("Enter Event Description");
-
-    const newRow = `
-        <div class="event-item">
-            <div class="event-date" contenteditable="true">${date}</div>
-            <div class="event-time" contenteditable="true">${time}</div>
-            <div class="event-desc" contenteditable="true">${desc}</div>
-        </div>`;
-
-    document.getElementById('events-list').insertAdjacentHTML('beforeend', newRow);
-    window.openTab('events');
-    finalizeAdd('events-list');
+function saveNewEvent() {
+    push(ref(db, 'events'), { 
+        date: document.getElementById('new-date').value, 
+        time: document.getElementById('new-time').value, 
+        desc: document.getElementById('new-desc').value 
+    });
 }
 
-/* -------------------- AFTER ADDING NEW ITEM -------------------- */
-function finalizeAdd(listId) {
-    const list = document.getElementById(listId);
-    const newEl = (listId.includes('list-') && listId !== 'events-list')
-        ? list.firstElementChild
-        : list.lastElementChild;
-
-    newEl.querySelectorAll('[contenteditable]').forEach(e => e.classList.add('editable-active'));
-    closeModal();
-
-    const inputs = document.getElementsByClassName('modal-input');
-    for(let i=0; i<inputs.length; i++) inputs[i].value = '';
-}
-
-/* -------------------- BACKGROUND BUBBLE ANIMATION -------------------- */
-const canvas = document.getElementById('bg-canvas');
-const ctx = canvas.getContext('2d');
-let width, height, particles;
-
-function resize() { 
-    width = canvas.width = window.innerWidth; 
-    height = canvas.height = window.innerHeight; 
-}
-
-class Particle {
-    constructor() { this.reset(); this.y = Math.random() * height; }
-    reset() {
-        this.x = Math.random() * width;
-        this.y = height + Math.random() * 100;
-        this.speedY = Math.random() * 1 + 0.5;
-        this.size = Math.random() * 33 + 2;
-        this.swing = Math.random() * 2;
-        this.swingStep = 0;
-    }
-    update() {
-        this.y -= this.speedY;
-        this.swingStep += 0.02;
-        this.x += Math.sin(this.swingStep) * this.swing * 0.1;
-
-        if (this.y + this.size < 0) this.reset();
-    }
-    draw() {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
-        ctx.strokeStyle = 'rgba(255, 50, 50, 0.2)';
-        ctx.lineWidth = 2;
-        ctx.fill();
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.arc(this.x - this.size*0.3, this.y - this.size*0.3, this.size*0.2, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-        ctx.fill();
-    }
-}
-
-function initParticles() {
-    particles = [];
-    const count = window.innerWidth < 768 ? 30 : 60;
-    for (let i = 0; i < count; i++) particles.push(new Particle());
-}
-
-function animate() {
-    ctx.clearRect(0, 0, width, height);
-    for (let i = 0; i < particles.length; i++) {
-        particles[i].update();
-        particles[i].draw();
-    }
-    requestAnimationFrame(animate);
-}
-
-window.addEventListener('resize', () => { 
-    resize(); 
-    initParticles(); 
+/* -------------------- 6. LEADERBOARD & UI -------------------- */
+document.querySelectorAll('.cat-header').forEach(header => {
+    header.style.cursor = "pointer";
+    header.addEventListener('click', () => {
+        const listId = header.parentElement.querySelector('div[id^="list-"]').id;
+        showStudentLeaderboard(listId, header.innerText);
+    });
 });
 
-resize(); 
-initParticles(); 
-animate();
+function showStudentLeaderboard(sectionId, titleName) {
+    let studentScores = {};
+    Object.values(allResultsData).forEach(res => {
+        if (res.sectionId === sectionId) {
+            const addPoints = (s, p) => {
+                if(!s || !s.name) return;
+                const key = s.name.trim().toLowerCase();
+                if(!studentScores[key]) studentScores[key] = { name: s.name, wing: s.wing, total: 0 };
+                studentScores[key].total += p;
+            };
+            addPoints(res.first, POINTS.first); addPoints(res.second, POINTS.second); addPoints(res.third, POINTS.third);
+        }
+    });
+
+    let ranking = Object.values(studentScores).sort((a, b) => b.total - a.total);
+    let rows = ranking.map((s, i) => `<tr><td style="padding:5px;">#${i+1}</td><td style="padding:5px;"><b>${s.name}</b> (${s.wing})</td><td style="padding:5px; color:red;">${s.total}</td></tr>`).join("");
+    if(!rows) rows = "<tr><td colspan='3' style='text-align:center'>No points yet</td></tr>";
+
+    if(!window.originalModalContent) window.originalModalContent = document.querySelector('.modal-content').innerHTML;
+    const content = document.querySelector('.modal-content');
+    content.innerHTML = `<h2 style="text-align:center;">${titleName} TOP STUDENTS</h2><table style="width:100%; border-collapse:collapse; text-align:left;">${rows}</table><button onclick="closeLeaderboard()" style="width:100%; margin-top:15px; padding:10px;">CLOSE</button>`;
+    document.getElementById('addModal').style.display = 'flex';
+}
+
+window.closeLeaderboard = function() {
+    document.getElementById('addModal').style.display = 'none';
+    if(window.originalModalContent) document.querySelector('.modal-content').innerHTML = window.originalModalContent;
+};
+
+window.openTab = function(tabName) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(tabName).classList.add('active');
+};
+
+window.openModal = function(type) {
+    currentMode = type;
+    if(window.originalModalContent) document.querySelector('.modal-content').innerHTML = window.originalModalContent;
+    document.getElementById('addModal').style.display = 'flex';
+    document.getElementById('result-inputs').style.display = type === 'result' ? 'flex' : 'none';
+    document.getElementById('event-inputs').style.display = type === 'result' ? 'none' : 'flex';
+};
+
+window.closeModal = function() { document.getElementById('addModal').style.display = 'none'; };
+window.pushToFirebase = function() { alert("Data is already live!"); };
+window.resetData = function() { if(confirm("DELETE ALL DATA?")) { set(ref(db, 'scores'), {Nexara:0,Ignara:0,Zonara:0,Lunara:0}); set(ref(db,'results'),null); set(ref(db,'events'),null); location.reload(); }};
+
+// BACKGROUND ANIMATION
+const canvas = document.getElementById('bg-canvas');
+if(canvas){
+    const ctx=canvas.getContext('2d'); let w,h,p=[];
+    const resize=()=>{w=canvas.width=window.innerWidth;h=canvas.height=window.innerHeight;};
+    class P{constructor(){this.reset();}reset(){this.x=Math.random()*w;this.y=h+Math.random()*100;this.s=Math.random()*1+0.5;}update(){this.y-=this.s;if(this.y<0)this.reset();}draw(){ctx.beginPath();ctx.arc(this.x,this.y,Math.random()*3,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,0.1)';ctx.fill();}}
+    const anim=()=>{ctx.clearRect(0,0,w,h);p.forEach(x=> {x.update();x.draw();});requestAnimationFrame(anim);};
+    window.onresize=()=>{resize();p=[];for(let i=0;i<50;i++)p.push(new P());};
+    resize();for(let i=0;i<50;i++)p.push(new P());anim();
+}
