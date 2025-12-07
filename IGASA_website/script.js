@@ -200,7 +200,7 @@ window.closeModal = function() {
 // Admin Password Protection
 window.toggleAdminMode = function() {
     const pass = prompt("Enter Admin Password:");
-    if (pass === "1234") { // Change "1234" to whatever password you want
+    if (pass === "admin") { // Change "1234" to whatever password you want
         document.querySelector('.admin-controls').classList.add('unlocked');
         alert("Admin Mode Unlocked");
     } else {
@@ -221,3 +221,4 @@ window.resetData = function() {
         alert("Reset Complete");
     }
 };
+
