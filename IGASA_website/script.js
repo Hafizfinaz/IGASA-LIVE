@@ -21,19 +21,23 @@ const db = getDatabase(app);
 let currentScores = { Nexara: 0, Ignara: 0, Zonara: 0, Lunara: 0 };
 let allResultsData = {};
 let isAdmin = false; 
-const ADMIN_PASSWORD = "1234"; // CHANGE THIS PASSWORD
+const ADMIN_PASSWORD = "1234"; // CHANGE THIS!
 const POINTS = { first: 10, second: 7, third: 5 };
 
-/* -------------------- 1. EMERGENCY LOCK (RUNS IMMEDIATELY) -------------------- */
+/* -------------------- 1. EMERGENCY LOCK ON LOAD -------------------- */
 document.addEventListener("DOMContentLoaded", function() {
     isAdmin = false;
-    enableEditing(false); // FORCE DISABLE EDITING ON LOAD
+    enableEditing(false); // Lock everything immediately
 });
 
 /* -------------------- 2. DATABASE LISTENERS -------------------- */
 onValue(ref(db, 'scores'), (snapshot) => {
     const data = snapshot.val();
-    if (data) { currentScores = data; updateScoreboardDisplay(); }
+    if (data) { 
+        currentScores = data; 
+        // Only update display if we are NOT currently editing (to prevent jumping text)
+        if(!isAdmin) updateScoreboardDisplay(); 
+    }
 });
 
 onValue(ref(db, 'results'), (snapshot) => {
@@ -49,17 +53,23 @@ onValue(ref(db, 'events'), (snapshot) => {
     list.innerHTML = "";
     if (data) {
         Object.values(data).forEach(item => {
+            // Fix for "undefined" error - checks if data exists first
+            const d = item.date || "";
+            const t = item.time || "";
+            const desc = item.desc || "";
+            
             const div = document.createElement("div");
             div.className = "event-item";
-            div.innerHTML = `<div class="event-date">${item.date}</div><div class="event-time">${item.time}</div><div class="event-desc">${item.desc}</div>`;
+            div.innerHTML = `<div class="event-date">${d}</div><div class="event-time">${t}</div><div class="event-desc">${desc}</div>`;
             list.appendChild(div);
         });
-        if(!isAdmin) enableEditing(false); // Lock new items
+        if(!isAdmin) enableEditing(false);
     }
 });
 
 /* -------------------- 3. DISPLAY LOGIC -------------------- */
 function updateScoreboardDisplay() {
+    // We use innerText to safely set the score
     if(document.querySelector('.nexara .wing-score')) document.querySelector('.nexara .wing-score').innerText = currentScores.Nexara || 0;
     if(document.querySelector('.ignara .wing-score')) document.querySelector('.ignara .wing-score').innerText = currentScores.Ignara || 0;
     if(document.querySelector('.sonara .wing-score')) document.querySelector('.sonara .wing-score').innerText = currentScores.Zonara || 0;
@@ -75,14 +85,19 @@ function clearAllLists() {
 function addResultHTML(data) {
     const container = document.getElementById(data.sectionId);
     if (!container) return;
+    
+    // Validate data to prevent "undefined"
+    const p = data.program || "Unknown Program";
+    const c = data.category || "General";
+    
     const div = document.createElement("div");
     div.className = "result-item";
     div.innerHTML = `
-        <div class="res-header"><span class="res-title">${data.program}</span><span class="res-cat">${data.category}</span></div>
+        <div class="res-header"><span class="res-title">${p}</span><span class="res-cat">${c}</span></div>
         <div class="res-winners">
-            <div class="winner-row gold">🥇 <b>${data.first.wing}</b> - ${data.first.name} (${data.first.chest})</div>
-            <div class="winner-row silver">🥈 <b>${data.second.wing}</b> - ${data.second.name} (${data.second.chest})</div>
-            <div class="winner-row bronze">🥉 <b>${data.third.wing}</b> - ${data.third.name} (${data.third.chest})</div>
+            <div class="winner-row gold">🥇 <b>${data.first?.wing || ""}</b> - ${data.first?.name || ""}</div>
+            <div class="winner-row silver">🥈 <b>${data.second?.wing || ""}</b> - ${data.second?.name || ""}</div>
+            <div class="winner-row bronze">🥉 <b>${data.third?.wing || ""}</b> - ${data.third?.name || ""}</div>
         </div>`;
     container.appendChild(div);
 }
@@ -93,8 +108,9 @@ window.toggleAdminMode = function() {
         const pass = prompt("Enter Admin Password:");
         if (pass === ADMIN_PASSWORD) { 
             isAdmin = true;
+            document.querySelector('.admin-controls').classList.add('unlocked');
             
-            // FORCE SHOW BUTTONS (This brings back your "options")
+            // Show Buttons
             document.getElementById('add-res-btn').style.display = 'inline-block';
             document.getElementById('add-evt-btn').style.display = 'inline-block';
             document.getElementById('save-btn').style.display = 'inline-block';
@@ -102,32 +118,54 @@ window.toggleAdminMode = function() {
             document.getElementById('admin-lock-btn').innerText = "🔓 LOGOUT";
             
             enableEditing(true);
-            alert("Admin Mode Unlocked");
+            alert("Admin Mode Unlocked. You can now click scores to edit them manually!");
         } else {
             alert("Wrong Password");
         }
     } else {
         isAdmin = false;
-        // RELOAD TO LOCK EVERYTHING
         location.reload(); 
     }
 };
 
 function enableEditing(enable) {
+    // This allows you to click and type on the text
     const editables = document.querySelectorAll('.wing-score, .event-date, .event-time, .event-desc, .comp-title');
     editables.forEach(el => {
         el.contentEditable = enable ? "true" : "false";
         if(enable) {
             el.classList.add('editable-active');
-            el.style.pointerEvents = "auto"; // Allow clicking
+            el.style.pointerEvents = "auto"; 
         } else {
             el.classList.remove('editable-active');
-            el.style.pointerEvents = "none"; // Block clicking
+            el.style.pointerEvents = "none";
         }
     });
 }
 
-/* -------------------- 5. ADD DATA -------------------- */
+/* -------------------- 5. PUBLISH MANUAL EDITS (NEW FEATURE) -------------------- */
+window.pushToFirebase = function() {
+    if(!isAdmin) return;
+
+    // 1. Read the numbers currently on your screen
+    const n = parseInt(document.querySelector('.nexara .wing-score').innerText) || 0;
+    const i = parseInt(document.querySelector('.ignara .wing-score').innerText) || 0;
+    const z = parseInt(document.querySelector('.sonara .wing-score').innerText) || 0;
+    const l = parseInt(document.querySelector('.lunara .wing-score').innerText) || 0;
+
+    const manualScores = { Nexara: n, Ignara: i, Zonara: z, Lunara: l };
+
+    // 2. Save them to Firebase
+    set(ref(db, 'scores'), manualScores)
+    .then(() => {
+        alert("Scores Updated & Published Live!");
+    })
+    .catch((error) => {
+        alert("Error: " + error);
+    });
+};
+
+/* -------------------- 6. ADD DATA POPUP -------------------- */
 let currentMode = "result";
 
 window.confirmAdd = function() {
@@ -141,19 +179,24 @@ function saveNewResult() {
     const program = document.getElementById('new-title').value;
     const category = document.getElementById('new-cat').value;
     
-    const r1 = { wing: document.getElementById('new-rank1').value, name: document.getElementById('name-1').value, chest: document.getElementById('chest-1').value };
-    const r2 = { wing: document.getElementById('new-rank2').value, name: document.getElementById('name-2').value, chest: document.getElementById('chest-2').value };
-    const r3 = { wing: document.getElementById('new-rank3').value, name: document.getElementById('name-3').value, chest: document.getElementById('chest-3').value };
+    const r1 = { wing: document.getElementById('new-rank1').value, name: document.getElementById('name-1').value };
+    const r2 = { wing: document.getElementById('new-rank2').value, name: document.getElementById('name-2').value };
+    const r3 = { wing: document.getElementById('new-rank3').value, name: document.getElementById('name-3').value };
 
     if(!program) return alert("Please enter Program Name");
 
+    // Auto-Calculate Scores
     if (r1.wing) currentScores[r1.wing] = (currentScores[r1.wing] || 0) + POINTS.first;
     if (r2.wing) currentScores[r2.wing] = (currentScores[r2.wing] || 0) + POINTS.second;
     if (r3.wing) currentScores[r3.wing] = (currentScores[r3.wing] || 0) + POINTS.third;
 
+    // Save
     push(ref(db, 'results'), { sectionId, program, category, first: r1, second: r2, third: r3 });
     set(ref(db, 'scores'), currentScores);
-    alert("Saved!");
+    
+    // Update screen immediately
+    updateScoreboardDisplay();
+    alert("Result Added & Scores Updated!");
 }
 
 function saveNewEvent() {
@@ -162,17 +205,33 @@ function saveNewEvent() {
         time: document.getElementById('new-time').value, 
         desc: document.getElementById('new-desc').value 
     });
+    alert("Event Added!");
 }
 
-/* -------------------- 6. LEADERBOARD & UI -------------------- */
+/* -------------------- 7. UI HELPERS -------------------- */
+window.openTab = function(tabName) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(tabName).classList.add('active');
+};
+
+window.openModal = function(type) {
+    currentMode = type;
+    document.getElementById('addModal').style.display = 'flex';
+    document.getElementById('result-inputs').style.display = type === 'result' ? 'flex' : 'none';
+    document.getElementById('event-inputs').style.display = type === 'result' ? 'none' : 'flex';
+};
+
+window.closeModal = function() { document.getElementById('addModal').style.display = 'none'; };
+window.resetData = function() { if(confirm("DELETE ALL DATA?")) { set(ref(db, 'scores'), {Nexara:0,Ignara:0,Zonara:0,Lunara:0}); set(ref(db,'results'),null); set(ref(db,'events'),null); location.reload(); }};
+
+// Leaderboard Logic (Same as before)
 document.querySelectorAll('.cat-header').forEach(header => {
-    header.style.cursor = "pointer";
     header.addEventListener('click', () => {
         const listId = header.parentElement.querySelector('div[id^="list-"]').id;
         showStudentLeaderboard(listId, header.innerText);
     });
 });
-
 function showStudentLeaderboard(sectionId, titleName) {
     let studentScores = {};
     Object.values(allResultsData).forEach(res => {
@@ -186,41 +245,14 @@ function showStudentLeaderboard(sectionId, titleName) {
             addPoints(res.first, POINTS.first); addPoints(res.second, POINTS.second); addPoints(res.third, POINTS.third);
         }
     });
-
     let ranking = Object.values(studentScores).sort((a, b) => b.total - a.total);
     let rows = ranking.map((s, i) => `<tr><td style="padding:5px;">#${i+1}</td><td style="padding:5px;"><b>${s.name}</b> (${s.wing})</td><td style="padding:5px; color:red;">${s.total}</td></tr>`).join("");
     if(!rows) rows = "<tr><td colspan='3' style='text-align:center'>No points yet</td></tr>";
-
-    if(!window.originalModalContent) window.originalModalContent = document.querySelector('.modal-content').innerHTML;
-    const content = document.querySelector('.modal-content');
-    content.innerHTML = `<h2 style="text-align:center;">${titleName} TOP STUDENTS</h2><table style="width:100%; border-collapse:collapse; text-align:left;">${rows}</table><button onclick="closeLeaderboard()" style="width:100%; margin-top:15px; padding:10px;">CLOSE</button>`;
+    document.querySelector('.modal-content').innerHTML = `<h2 style="text-align:center;">${titleName} TOP STUDENTS</h2><table style="width:100%; border-collapse:collapse; text-align:left;">${rows}</table><button onclick="document.getElementById('addModal').style.display='none'; location.reload();" style="width:100%; margin-top:15px; padding:10px;">CLOSE</button>`;
     document.getElementById('addModal').style.display = 'flex';
 }
 
-window.closeLeaderboard = function() {
-    document.getElementById('addModal').style.display = 'none';
-    if(window.originalModalContent) document.querySelector('.modal-content').innerHTML = window.originalModalContent;
-};
-
-window.openTab = function(tabName) {
-    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById(tabName).classList.add('active');
-};
-
-window.openModal = function(type) {
-    currentMode = type;
-    if(window.originalModalContent) document.querySelector('.modal-content').innerHTML = window.originalModalContent;
-    document.getElementById('addModal').style.display = 'flex';
-    document.getElementById('result-inputs').style.display = type === 'result' ? 'flex' : 'none';
-    document.getElementById('event-inputs').style.display = type === 'result' ? 'none' : 'flex';
-};
-
-window.closeModal = function() { document.getElementById('addModal').style.display = 'none'; };
-window.pushToFirebase = function() { alert("Data is already live!"); };
-window.resetData = function() { if(confirm("DELETE ALL DATA?")) { set(ref(db, 'scores'), {Nexara:0,Ignara:0,Zonara:0,Lunara:0}); set(ref(db,'results'),null); set(ref(db,'events'),null); location.reload(); }};
-
-/* -------------------- 7. BACKGROUND ANIMATION (BUBBLES) -------------------- */
+/* -------------------- 8. BACKGROUND ANIMATION -------------------- */
 const canvas = document.getElementById('bg-canvas');
 if(canvas){
     const ctx=canvas.getContext('2d'); let w,h,p=[];
