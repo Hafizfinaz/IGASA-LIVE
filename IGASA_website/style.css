@@ -85,7 +85,7 @@ body {
   color: var(--neon-red);
   letter-spacing: 3px;
   font-size: 2em;
-  text-shadow: 0 0 35px var(--dark-bg);
+  text-shadow: 0 0 15px var(--none);
   font-weight: 900;
 }
 
@@ -536,4 +536,5 @@ body {
   font-size: 0.8em;
   color: var(--neon-red);
 }
+
 
