@@ -255,10 +255,23 @@ function showStudentLeaderboard(sectionId, titleName) {
 /* -------------------- 8. BACKGROUND ANIMATION -------------------- */
 const canvas = document.getElementById('bg-canvas');
 if(canvas){
-    const ctx=canvas.getContext('2d'); let w,h,p=[];
-    const resize=()=>{w=canvas.width=window.innerWidth;h=canvas.height=window.innerHeight;};
-    class P{constructor(){this.reset();}reset(){this.x=Math.random()*w;this.y=h+Math.random()*100;this.s=Math.random()*1+0.5;}update(){this.y-=this.s;if(this.y<0)this.reset();}draw(){ctx.beginPath();ctx.arc(this.x,this.y,Math.random()*3,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,0.1)';ctx.fill();}}
-    const anim=()=>{ctx.clearRect(0,0,w,h);p.forEach(x=> {x.update();x.draw();});requestAnimationFrame(anim);};
-    window.onresize=()=>{resize();p=[];for(let i=0;i<50;i++)p.push(new P());};
-    resize();for(let i=0;i<50;i++)p.push(new P());anim();
+    // const ctx=canvas.getContext('2d'); let w,h,p=[];
+    // const resize=()=>{w=canvas.width=window.innerWidth;h=canvas.height=window.innerHeight;};
+    // class P{constructor(){this.reset();}reset(){this.x=Math.random()*w;this.y=h+Math.random()*100;this.s=Math.random()*1+0.5;}update(){this.y-=this.s;if(this.y<0)this.reset();}draw(){ctx.beginPath();ctx.arc(this.x,this.y,Math.random()*3,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,0.1)';ctx.fill();}}
+    // const anim=()=>{ctx.clearRect(0,0,w,h);p.forEach(x=> {x.update();x.draw();});requestAnimationFrame(anim);};
+    // window.onresize=()=>{resize();p=[];for(let i=0;i<50;i++)p.push(new P());};
+    // resize();for(let i=0;i<50;i++)p.push(new P());anim();
+    const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height, particles;
+        function resize() { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; }
+        class Particle {
+            constructor() { this.reset(); this.y = Math.random() * height; }
+            reset() { this.x = Math.random() * width; this.y = height + Math.random() * 100; this.speedY = Math.random() * 1 + 0.5; this.size = Math.random() * 33 + 2; this.swing = Math.random() * 2; this.swingStep = 0; }
+            update() { this.y -= this.speedY; this.swingStep += 0.02; this.x += Math.sin(this.swingStep) * this.swing * 0.1; if (this.y + this.size < 0) this.reset(); }
+            draw() { ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255, 255, 255, 0.05)'; ctx.strokeStyle = 'rgba(255, 50, 50, 0.2)'; ctx.lineWidth = 2; ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.arc(this.x - this.size*0.3, this.y - this.size*0.3, this.size*0.2, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255, 255, 255, 0.3)'; ctx.fill(); }
+        }
+        function initParticles() { particles = []; const count = window.innerWidth < 768 ? 30 : 60; for (let i = 0; i < count; i++) particles.push(new Particle()); }
+        function animate() { ctx.clearRect(0, 0, width, height); for (let i = 0; i < particles.length; i++) { particles[i].update(); particles[i].draw(); } requestAnimationFrame(animate); }
+        window.addEventListener('resize', () => { resize(); initParticles(); }); resize(); initParticles(); animate();
 }

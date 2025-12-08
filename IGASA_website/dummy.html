@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IMAM GAZZALI ACADEMY - IGASA Fest 2k25</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+
+        :root {
+            --neon-red: #ff1100;
+            --dark-bg: #050000;
+            --panel-bg: rgba(30, 5, 5, 0.9);
+        }
+
+        body {
+            font-family: 'Orbitron', sans-serif;
+            margin: 0;
+            padding: 20px;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            background-color: var(--dark-bg);
+            overflow-x: hidden;
+            padding-bottom: 120px;
+        }
+
+        /* --- LIVE BACKGROUND --- */
+        #bg-canvas {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+            background: radial-gradient(circle at 50% 50%, #1a0505 0%, #000000 100%);
+        }
+
+        /* --- HEADER --- */
+        .header {
+            display: flex; justify-content: space-between; align-items: center;
+            width: 98%; max-width: 1200px; margin-bottom: 30px; z-index: 2;
+        }
+        .title-container { text-align: center; flex: 1; margin: 0 20px; }
+        .main-logo {
+            width: 150px; height: 150px; background-color: #ffffff; 
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 20px; border-radius: 15px; border: 2px solid var(--neon-red);
+            box-shadow: 0 0 15px rgba(255, 17, 0, 0.3); padding: 10px; 
+        }
+        .side-logo {
+            width: 100px; height: 100px; background-color: #ffffff; 
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 15px; border: 2px solid var(--neon-red);
+            box-shadow: 0 0 15px rgba(255, 17, 0, 0.3); padding: 5px;
+        }
+        .logo-img { width: 100%; height: 100%; object-fit: contain; }
+        .fest-name { color: #fff; margin: 10px 0; letter-spacing: 2px; font-size: 1.8em; text-shadow: 0 0 10px var(--neon-red); }
+        .tagline { color: var(--neon-red); letter-spacing: 3px; font-size: 2em; text-shadow: 0 0 15px var(--neon-red); font-weight: 900; }
+
+        /* --- SCOREBOARD --- */
+        .scoreboard {
+            display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;
+            width: 100%; max-width: 1200px; margin-bottom: 40px; z-index: 2;
+        }
+        .wing-box {
+            position: relative;
+            width: 220px; height: 160px;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            text-align: center; margin: 10px;
+            background: linear-gradient(180deg, rgba(255, 17, 0, 0.1) 0%, rgba(0, 0, 0, 0.9) 100%);
+            backdrop-filter: blur(5px);
+            border: 1px solid var(--neon-red); border-top: 3px solid var(--neon-red);
+            clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
+            box-shadow: 0 0 15px rgba(255, 17, 0, 0.1), inset 0 0 20px rgba(255, 17, 0, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); overflow: hidden;
+        }
+        .wing-box:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 10px 30px rgba(255, 17, 0, 0.3), inset 0 0 20px rgba(255, 17, 0, 0.2);
+            border-color: #ff5544;
+            background: linear-gradient(180deg, rgba(255, 17, 0, 0.2) 0%, rgba(20, 0, 0, 0.95) 100%);
+        }
+        .wing-box::after {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transform: rotate(45deg) translateY(-100%); transition: transform 0.5s; pointer-events: none;
+        }
+        .wing-box:hover::after { transform: rotate(45deg) translateY(100%); transition: transform 1s ease-in-out; }
+        .wing-box::before {
+            content: ''; position: absolute; bottom: 5px; right: 5px; width: 10px; height: 10px;
+            border-bottom: 2px solid var(--neon-red); border-right: 2px solid var(--neon-red);
+        }
+        .wing-name { font-size: 1.4em; margin: 0 0 5px 0; font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 2px; z-index: 2; }
+        .wing-score { font-size: 3.5em; font-weight: 900; color: var(--neon-red); text-shadow: none; font-family: 'Orbitron', sans-serif; line-height: 1; z-index: 2; }
+
+        /* --- TABS --- */
+        .tabs-nav { display: flex; justify-content: center; gap: 15px; margin-bottom: 20px; z-index: 2; width: 95%; max-width: 1000px; }
+        .tab-btn {
+            background: rgba(0,0,0,0.8); color: #fff; border: 1px solid #555;
+            padding: 15px 30px; font-family: 'Orbitron', sans-serif; font-size: 1.1em;
+            cursor: pointer; transition: all 0.3s; flex: 1; text-align: center;
+            clip-path: polygon(10% 0, 100% 0, 90% 100%, 0% 100%);
+        }
+        .tab-btn:hover { background: rgba(255, 17, 0, 0.2); border-color: var(--neon-red); }
+        .tab-btn.active { background: var(--neon-red); color: #000; font-weight: bold; border-color: var(--neon-red); box-shadow: 0 0 15px var(--neon-red); }
+        .tab-content { display: none; width: 95%; max-width: 1000px; z-index: 2; animation: fadeIn 0.5s; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .content-box {
+            background: var(--panel-bg); padding: 20px; border: 2px solid var(--neon-red);
+            box-shadow: 0 0 20px rgba(255, 10, 0, 0.2);
+            clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+        }
+
+        /* --- CATEGORY HEADERS --- */
+        .category-section { margin-bottom: 30px; }
+        .cat-header {
+            background: rgba(255, 17, 0, 0.2);
+            color: #fff;
+            padding: 10px 15px;
+            border-left: 5px solid var(--neon-red);
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        /* --- RESULTS STYLES --- */
+        .comp-row {
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(0,0,0,0.6); padding: 15px; margin-bottom: 10px;
+            border-left: 4px solid #555; transition: all 0.3s ease;
+        }
+        .comp-row:hover { border-left-color: var(--neon-red); background: rgba(255,17,0,0.05); }
+        .comp-info { flex: 0.8; text-align: left; }
+        .comp-title { color: var(--neon-red); font-weight: bold; font-size: 1.2em; text-shadow: none; }
+        .comp-cat { font-size: 0.8em; color: #aaa; margin-top: 3px; }
+        .comp-winners { flex: 2; text-align: right; display: flex; flex-direction: column; gap: 5px; }
+        .winner-line { font-family: 'Orbitron', sans-serif; letter-spacing: 0.5px; display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
+        
+        .w-rank { font-weight: bold; min-width: 30px; }
+        .w-house { font-weight: bold; }
+        .w-name { color: #ddd; font-style: italic; }
+        .w-chest { color: #aaa; font-size: 0.9em; }
+
+        .rank-1 .w-rank, .rank-1 .w-house { color: var(--neon-red); }
+        .rank-1 .w-name { color: #fff; }
+        .rank-1 { border-bottom: 1px solid rgba(255, 17, 0, 0.3); padding-bottom: 2px; margin-bottom: 2px; }
+        .rank-2 .w-rank, .rank-2 .w-house { color: #fff; }
+        .rank-3 .w-rank, .rank-3 .w-house { color: #cc8888; }
+
+        /* --- EVENTS --- */
+        .event-item {
+            background: rgba(0,0,0,0.4); padding: 15px; margin-bottom: 10px;
+            border-bottom: 1px solid #333; display: flex; align-items: center; gap: 15px; transition: all 0.3s ease;
+        }
+        .event-item:hover { background: rgba(255, 17, 0, 0.1); }
+        .event-date { color: #fff; font-weight: bold; min-width: 80px; font-size: 0.9em; border-right: 1px solid #444; padding-right: 10px;}
+        .event-time { color: var(--neon-red); font-weight: bold; min-width: 90px; font-size: 1.1em; }
+        .event-desc { flex: 1; line-height: 1.5; font-size: 1em; }
+        .section-title { text-align: center; color: #fff; letter-spacing: 2px; border-bottom: 2px solid var(--neon-red); padding-bottom: 10px; margin-bottom: 20px; }
+
+        /* ADMIN CONTROLS */
+        .admin-controls { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; align-items: flex-end; }
+        .admin-btn { background: #000; color: #fff; border: 1px solid var(--neon-red); padding: 12px 20px; cursor: pointer; font-family: 'Orbitron', sans-serif; font-size: 0.8em; box-shadow: 0 0 10px #000; }
+        #save-btn { background: var(--neon-red); color: #000; font-weight: bold; display: none; }
+        #add-res-btn, #add-evt-btn { background: #fff; color: #000; font-weight: bold; display: none; }
+        #reset-btn { background: #800000; display: none; }
+        .editable-active { border: 1px dashed var(--neon-red); background: rgba(255,0,0,0.1); cursor: text; }
+
+        /* MOBILE RESPONSIVENESS */
+        @media (max-width: 900px) {
+            .header { flex-direction: column; gap: 20px; }
+            .title-container { order: 2; margin: 0; }
+            .header > .side-logo:first-child { order: 1; }
+            .header > .side-logo:last-child { order: 1; }
+            .wing-box { width: 45%; height: 140px; margin: 5px; }
+            .comp-row { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .comp-winners { width: 100%; text-align: left; }
+            .winner-line { justify-content: flex-start; flex-wrap: wrap; gap: 5px; }
+            .event-item { flex-direction: column; align-items: flex-start; gap: 5px; }
+            .event-date { border-right: none; padding-right: 0; color: #aaa; font-size: 0.8em; }
+        }
+
+        /* MODAL */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10000; align-items: center; justify-content: center; overflow-y: auto;}
+        .modal-content { background: #111; padding: 25px; border: 2px solid var(--neon-red); width: 90%; max-width: 450px; display: flex; flex-direction: column; gap: 10px; max-height: 90vh; overflow-y: auto; }
+        .modal-input, .modal-select { padding: 10px; background: #222; color: #fff; border: 1px solid #444; width: 100%; box-sizing: border-box; }
+        .modal-actions { display: flex; gap: 10px; margin-top: 10px; }
+        .modal-btn { flex: 1; padding: 10px; cursor: pointer; border: none; font-weight: bold; }
+        .btn-confirm { background: var(--neon-red); }
+        .input-group { display: flex; gap: 5px; align-items: center; }
+        .input-group label { min-width: 30px; font-size: 0.8em; color: var(--neon-red); }
+    </style>
+</head>
+<body>
+
+    <canvas id="bg-canvas"></canvas>
+
+    <div class="header">
+        <div class="side-logo"> <img src="https://placehold.co/100x100/png?text=Left" alt="Left Logo" class="logo-img"> </div>
+        <div class="title-container">
+            <div class="main-logo"> <img src="kun fayakun logo.png" alt="Main Logo" class="logo-img"> </div>
+            <div class="fest-name">Imam Gazzali Academy Students' Association</div>
+            <div class="tagline">YAKUN IGASA FEST 2K25</div>
+        </div>
+        <div class="side-logo"> <img src="https://placehold.co/100x100/png?text=Right" alt="Right Logo" class="logo-img"> </div>
+    </div>
+
+    <div class="scoreboard" id="scoreboard-container">
+        <div class="wing-box nexara"><h3 class="wing-name">Nexara</h3><div class="wing-score" contenteditable="false">1200</div></div>
+        <div class="wing-box ignara"><h3 class="wing-name">Ignara</h3><div class="wing-score" contenteditable="false">1150</div></div>
+        <div class="wing-box sonara"><h3 class="wing-name">Zonara</h3><div class="wing-score" contenteditable="false">980</div></div>
+        <div class="wing-box lunara"><h3 class="wing-name">Lunara</h3><div class="wing-score" contenteditable="false">1300</div></div>
+    </div>
+
+    <div class="tabs-nav">
+        <button class="tab-btn active" onclick="openTab('results')">RESULTS</button>
+        <button class="tab-btn" onclick="openTab('events')">EVENTS</button>
+    </div>
+
+    <div id="results" class="tab-content active">
+        <div class="content-box">
+            <h2 class="section-title">Competition Results</h2>
+            <div id="results-main-container">
+                <div class="category-section">
+                    <h3 class="cat-header">GENERAL</h3>
+                    <div id="list-general">
+                        <div class="comp-row">
+                            <div class="comp-info"><div class="comp-title" contenteditable="false">Football Match</div><div class="comp-cat" contenteditable="false">Sports</div></div>
+                            <div class="comp-winners">
+                                <div class="winner-line rank-1"><span class="w-rank">1st:</span> <span class="w-house">Nexara</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="category-section"><h3 class="cat-header">SENIOR</h3><div id="list-senior"></div></div>
+                <div class="category-section"><h3 class="cat-header">JUNIOR</h3><div id="list-junior"></div></div>
+                <div class="category-section"><h3 class="cat-header">SUB JUNIOR</h3><div id="list-subjunior"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="events" class="tab-content">
+        <div class="content-box">
+            <h2 class="section-title">Event Schedule</h2>
+            <div id="events-list">
+                <div class="event-item">
+                    <div class="event-date" contenteditable="false">Jan 10</div>
+                    <div class="event-time" contenteditable="false">09:00 AM</div>
+                    <div class="event-desc" contenteditable="false">Opening Ceremony</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-controls">
+        <button id="add-res-btn" class="admin-btn" onclick="openModal('result')">➕ ADD RESULT</button>
+        <button id="add-evt-btn" class="admin-btn" onclick="openModal('event')">➕ ADD EVENT</button>
+        <button id="save-btn" class="admin-btn" onclick="saveChanges()">💾 SAVE ALL</button>
+        <button id="reset-btn" class="admin-btn" onclick="resetData()">⚠ RESET</button>
+        <button id="admin-lock-btn" class="admin-btn" onclick="toggleAdminMode()">🔒 ADMIN</button>
+    </div>
+
+    <div id="addModal" class="modal">
+        <div class="modal-content">
+            <h3 id="modal-title" style="color:var(--neon-red); text-align:center; margin:0;">ADD</h3>
+            <div id="result-inputs" style="display:none; flex-direction:column; gap:10px;">
+                <label style="color:#aaa; font-size:0.9em;">Select Section:</label>
+                <select id="new-section" class="modal-select">
+                    <option value="list-general">General</option><option value="list-senior">Senior</option><option value="list-junior">Junior</option><option value="list-subjunior">Sub Junior</option>
+                </select>
+                <input type="text" id="new-title" class="modal-input" placeholder="Program Name">
+                <input type="text" id="new-cat" class="modal-input" placeholder="Category (e.g. Stage)">
+                <h4 style="margin:5px 0 0 0; color:#aaa; font-size:0.9em;">1st Place:</h4>
+                <div class="input-group">
+                    <select id="new-rank1" class="modal-select"><option value="Nexara">Nexara</option><option value="Ignara">Ignara</option><option value="Zonara">Zonara</option><option value="Lunara">Lunara</option></select>
+                    <input type="text" id="name-1" class="modal-input" placeholder="Name">
+                    <input type="text" id="chest-1" class="modal-input" placeholder="Chest No" style="width:80px;">
+                </div>
+                <h4 style="margin:5px 0 0 0; color:#aaa; font-size:0.9em;">2nd Place:</h4>
+                <div class="input-group">
+                    <select id="new-rank2" class="modal-select"><option value="Nexara">Nexara</option><option value="Ignara">Ignara</option><option value="Zonara">Zonara</option><option value="Lunara">Lunara</option></select>
+                    <input type="text" id="name-2" class="modal-input" placeholder="Name">
+                    <input type="text" id="chest-2" class="modal-input" placeholder="Chest No" style="width:80px;">
+                </div>
+                <h4 style="margin:5px 0 0 0; color:#aaa; font-size:0.9em;">3rd Place:</h4>
+                <div class="input-group">
+                    <select id="new-rank3" class="modal-select"><option value="Nexara">Nexara</option><option value="Ignara">Ignara</option><option value="Zonara">Zonara</option><option value="Lunara">Lunara</option></select>
+                    <input type="text" id="name-3" class="modal-input" placeholder="Name">
+                    <input type="text" id="chest-3" class="modal-input" placeholder="Chest No" style="width:80px;">
+                </div>
+            </div>
+            <div id="event-inputs" style="display:none; flex-direction:column; gap:10px;">
+                <input type="text" id="new-date" class="modal-input" placeholder="Date (e.g. Jan 10)">
+                <input type="text" id="new-time" class="modal-input" placeholder="Time (e.g. 10:00 AM)">
+                <input type="text" id="new-desc" class="modal-input" placeholder="Event Description">
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn" style="background:#333; color:#fff;" onclick="closeModal()">Cancel</button>
+                <button class="modal-btn btn-confirm" onclick="confirmAdd()">Add</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- BUBBLE BACKGROUND ---
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height, particles;
+        function resize() { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; }
+        class Particle {
+            constructor() { this.reset(); this.y = Math.random() * height; }
+            reset() { this.x = Math.random() * width; this.y = height + Math.random() * 100; this.speedY = Math.random() * 1 + 0.5; this.size = Math.random() * 33 + 2; this.swing = Math.random() * 2; this.swingStep = 0; }
+            update() { this.y -= this.speedY; this.swingStep += 0.02; this.x += Math.sin(this.swingStep) * this.swing * 0.1; if (this.y + this.size < 0) this.reset(); }
+            draw() { ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255, 255, 255, 0.05)'; ctx.strokeStyle = 'rgba(255, 50, 50, 0.2)'; ctx.lineWidth = 2; ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.arc(this.x - this.size*0.3, this.y - this.size*0.3, this.size*0.2, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255, 255, 255, 0.3)'; ctx.fill(); }
+        }
+        function initParticles() { particles = []; const count = window.innerWidth < 768 ? 30 : 60; for (let i = 0; i < count; i++) particles.push(new Particle()); }
+        function animate() { ctx.clearRect(0, 0, width, height); for (let i = 0; i < particles.length; i++) { particles[i].update(); particles[i].draw(); } requestAnimationFrame(animate); }
+        window.addEventListener('resize', () => { resize(); initParticles(); }); resize(); initParticles(); animate();
+
+        // --- TABS ---
+        function openTab(tabName) {
+            var i, x = document.getElementsByClassName("tab-content"), buttons = document.getElementsByClassName("tab-btn");
+            for (i = 0; i < x.length; i++) { x[i].style.display = "none"; x[i].classList.remove("active"); }
+            for (i = 0; i < buttons.length; i++) { buttons[i].classList.remove("active"); }
+            document.getElementById(tabName).style.display = "block";
+            event.target.classList.add("active");
+        }
+
+        // --- ADMIN & STORAGE ---
+        const ADMIN_PASSWORD = "admin"; 
+        let isAdmin = false;
+
+        function loadData() {
+            if (!isAdmin) {
+                const s = localStorage.getItem('igasa_scores'); if(s) document.getElementById('scoreboard-container').innerHTML = s;
+                const r = localStorage.getItem('igasa_results'); if(r) document.getElementById('results-main-container').innerHTML = r;
+                const e = localStorage.getItem('igasa_events'); if(e) document.getElementById('events-list').innerHTML = e;
+            }
+        }
+        loadData();
+        setInterval(loadData, 2000);
+
+        function toggleAdminMode() {
+            if (!isAdmin) {
+                let pass = prompt("Enter Admin Password:");
+                if (pass === ADMIN_PASSWORD) {
+                    isAdmin = true;
+                    document.getElementById('admin-lock-btn').innerText = "🔓 LOGOUT";
+                    document.getElementById('save-btn').style.display = "block";
+                    document.getElementById('add-res-btn').style.display = "block";
+                    document.getElementById('add-evt-btn').style.display = "block";
+                    document.getElementById('reset-btn').style.display = "block";
+                    enableEditing(true);
+                    alert("Admin Mode Active.");
+                } else { alert("Wrong Password!"); }
+            } else {
+                isAdmin = false;
+                document.getElementById('admin-lock-btn').innerText = "🔒 ADMIN";
+                document.getElementById('save-btn').style.display = "none";
+                document.getElementById('add-res-btn').style.display = "none";
+                document.getElementById('add-evt-btn').style.display = "none";
+                document.getElementById('reset-btn').style.display = "none";
+                enableEditing(false);
+                loadData();
+            }
+        }
+
+        function enableEditing(enable) {
+            const selectors = '.wing-score, .comp-title, .comp-cat, .w-house, .w-name, .w-chest, .event-date, .event-time, .event-desc';
+            const editables = document.querySelectorAll(selectors);
+            editables.forEach(el => {
+                el.contentEditable = enable;
+                if (enable) el.classList.add('editable-active');
+                else el.classList.remove('editable-active');
+            });
+        }
+
+        function saveChanges() {
+            if (!isAdmin) return;
+            localStorage.setItem('igasa_scores', document.getElementById('scoreboard-container').innerHTML);
+            localStorage.setItem('igasa_results', document.getElementById('results-main-container').innerHTML);
+            localStorage.setItem('igasa_events', document.getElementById('events-list').innerHTML);
+            alert("ALL CHANGES SAVED!");
+        }
+
+        function resetData() {
+            if (confirm("Reset everything to default?")) { localStorage.clear(); location.reload(); }
+        }
+
+        // --- ADD MODALS ---
+        let currentMode = '';
+        function openModal(mode) { 
+            currentMode = mode;
+            document.getElementById('addModal').style.display = "flex";
+            if (mode === 'result') {
+                document.getElementById('modal-title').innerText = "ADD RESULT";
+                document.getElementById('result-inputs').style.display = "flex";
+                document.getElementById('event-inputs').style.display = "none";
+            } else {
+                document.getElementById('modal-title').innerText = "ADD EVENT";
+                document.getElementById('result-inputs').style.display = "none";
+                document.getElementById('event-inputs').style.display = "flex";
+            }
+        }
+        function closeModal() { document.getElementById('addModal').style.display = "none"; }
+        function confirmAdd() { if (currentMode === 'result') addNewResult(); else addNewEvent(); }
+
+        
+
+        function addNewEvent() {
+            const date = document.getElementById('new-date').value; const time = document.getElementById('new-time').value; const desc = document.getElementById('new-desc').value;
+            if(!desc) return alert("Enter Event Description");
+            const newRow = <div class="event-item"><div class="event-date" contenteditable="true">${date}</div><div class="event-time" contenteditable="true">${time}</div><div class="event-desc" contenteditable="true">${desc}</div></div>;
+            document.getElementById('events-list').insertAdjacentHTML('beforeend', newRow);
+            document.querySelector('.tab-btn:nth-child(2)').click();
+            finalizeAdd('events-list');
+        }
+
+        function finalizeAdd(listId) {
+            const list = document.getElementById(listId);
+            const newEl = (listId.includes('list-') && listId !== 'events-list') ? list.firstElementChild : list.lastElementChild;
+            newEl.querySelectorAll('[contenteditable]').forEach(e => e.classList.add('editable-active'));
+            closeModal();
+            const inputs = document.getElementsByClassName('modal-input');
+            for(let i=0; i<inputs.length; i++) inputs[i].value = '';
+        }
+    </script>
+</body>
+</html>
