@@ -536,6 +536,17 @@ body {
   font-size: 0.8em;
   color: var(--neon-red);
 }
+.watermark {
+    position: fixed;
+    bottom: 10px;
+    left: 15px;
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 1em;
+    z-index: 1000;
+    pointer-events: none;
+    font-weight: 300;
+    letter-spacing: 1px;
+}
 
 
 
