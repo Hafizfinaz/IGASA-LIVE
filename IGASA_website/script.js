@@ -17,20 +17,27 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-/* -------------------- VARIABLES -------------------- */
+/* -------------------- DATA & VARIABLES -------------------- */
 let currentScores = { Nexara: 0, Ignara: 0, Zonara: 0, Lunara: 0 };
 let allResultsData = {};
 let isAdmin = false;
-const ADMIN_PASSWORD = "yakun123igasa"; // Your Password
-const POINTS = { first: 5, second: 3, third: 1 };
+const ADMIN_PASSWORD = "yakun123igasa"; // CHANGE THIS
 
-/* -------------------- 1. EMERGENCY LOCK ON LOAD -------------------- */
+// ===> PASTE YOUR PDF PROGRAMS HERE <===
+const PROGRAM_LIST = {
+    "list-general": ["March Past", "Spelling Bee", "Football", "Quiz"],
+    "list-senior": ["Mappilappattu", "Speech Malayalam", "Speech English", "Essay Writing"],
+    "list-junior": ["Mappilappattu", "Story Telling", "Painting", "Pencil Drawing"],
+    "list-subjunior": ["Coloring", "Running Race", "Action Song"]
+};
+
+/* -------------------- LISTENERS -------------------- */
 document.addEventListener("DOMContentLoaded", function () {
     isAdmin = false;
     enableEditing(false);
+    updateProgramList(); // Load initial list
 });
 
-/* -------------------- 2. DATABASE LISTENERS -------------------- */
 onValue(ref(db, 'scores'), (snapshot) => {
     const data = snapshot.val();
     if (data) {
@@ -44,7 +51,6 @@ onValue(ref(db, 'results'), (snapshot) => {
     allResultsData = data || {};
     clearAllLists();
     if (data) { 
-        // Reverse array to show newest first
         Object.values(data).reverse().forEach(item => addResultHTML(item)); 
     }
 });
@@ -55,19 +61,16 @@ onValue(ref(db, 'events'), (snapshot) => {
     list.innerHTML = "";
     if (data) {
         Object.values(data).forEach(item => {
-            const d = item.date || "";
-            const t = item.time || "";
-            const desc = item.desc || "";
             const div = document.createElement("div");
             div.className = "event-item";
-            div.innerHTML = `<div class="event-date">${d}</div><div class="event-time">${t}</div><div class="event-desc">${desc}</div>`;
+            div.innerHTML = `<div class="event-date">${item.date}</div><div class="event-time">${item.time}</div><div class="event-desc">${item.desc}</div>`;
             list.appendChild(div);
         });
         if (!isAdmin) enableEditing(false);
     }
 });
 
-/* -------------------- 3. DISPLAY LOGIC -------------------- */
+/* -------------------- DISPLAY LOGIC -------------------- */
 function updateScoreboardDisplay() {
     if (document.querySelector('.nexara .wing-score')) document.querySelector('.nexara .wing-score').innerText = currentScores.Nexara || 0;
     if (document.querySelector('.ignara .wing-score')) document.querySelector('.ignara .wing-score').innerText = currentScores.Ignara || 0;
@@ -82,100 +85,52 @@ function clearAllLists() {
     });
 }
 
-// THIS FUNCTION RENDERS THE HTML ON THE SCREEN
 function addResultHTML(data) {
     const container = document.getElementById(data.sectionId);
     if (!container) return;
 
-    const p = data.program || "Unknown Program";
-    const c = data.category || "General"; // Gets the category correctly
+    // Helper to format winner string (e.g., "Nexara & Ignara")
+    const formatWinner = (w1, w2, n1, n2) => {
+        let text = `<b>${w1}</b>`;
+        if(n1) text += ` - ${n1}`;
+        if(w2) {
+            text += ` <br>& <b>${w2}</b>`;
+            if(n2) text += ` - ${n2}`;
+        }
+        return text;
+    };
 
     const div = document.createElement("div");
-    // div.className = "result-item"; // Removed wrapping div to match your CSS style
-    
     div.innerHTML = `
     <div class="comp-row">
         <div class="comp-info">
-            <div class="comp-title" contenteditable="false">${p}</div>
-            <div class="comp-cat" contenteditable="false">${c}</div> </div>
+            <div class="comp-title">${data.program}</div>
+            <div class="comp-cat" style="color:#aaa;">${data.category} | ${data.type.toUpperCase()}</div>
+        </div>
         <div class="comp-winners">
-            <div class="winner-line rank-1">
-                <span class="w-rank">1st:</span>
-                <span class="w-house">${data.first?.wing || ""}</span> - 
-                <span class="w-name">${data.first?.name || ""}</span>
-                <span class="w-chest">${data.first?.chest || ""}</span>
-            </div>
-            <div class="winner-line rank-2">
-                <span class="w-rank">2nd:</span>
-                <span class="w-house">${data.second?.wing || ""}</span> - 
-                <span class="w-name">${data.second?.name || ""}</span>
-                <span class="w-chest">${data.second?.chest || ""}</span>
-            </div>
-            <div class="winner-line rank-3">
-                <span class="w-rank">3rd:</span>
-                <span class="w-house">${data.third?.wing || ""}</span> - 
-                <span class="w-name">${data.third?.name || ""}</span>
-                <span class="w-chest">${data.third?.chest || ""}</span>
-            </div>
+            <div class="winner-line rank-1"><span class="w-rank">1st:</span> <span>${formatWinner(data.first.wing, data.first.tieWing, data.first.name, data.first.tieName)}</span></div>
+            <div class="winner-line rank-2"><span class="w-rank">2nd:</span> <span>${formatWinner(data.second.wing, data.second.tieWing, data.second.name, data.second.tieName)}</span></div>
+            <div class="winner-line rank-3"><span class="w-rank">3rd:</span> <span>${formatWinner(data.third.wing, data.third.tieWing, data.third.name, data.third.tieName)}</span></div>
         </div>
     </div>`;
     
     container.appendChild(div);
 }
 
-/* -------------------- 4. ADMIN & SECURITY -------------------- */
-window.toggleAdminMode = function () {
-    if (!isAdmin) {
-        const pass = prompt("Enter Admin Password:");
-        if (pass === ADMIN_PASSWORD) {
-            isAdmin = true;
-            document.querySelector('.admin-controls').classList.add('unlocked');
-            document.getElementById('add-res-btn').style.display = 'inline-block';
-            document.getElementById('add-evt-btn').style.display = 'inline-block';
-            document.getElementById('save-btn').style.display = 'inline-block';
-            document.getElementById('reset-btn').style.display = 'inline-block';
-            document.getElementById('admin-lock-btn').innerText = "🔓 LOGOUT";
-            enableEditing(true);
-            alert("Admin Mode Unlocked.");
-        } else {
-            alert("Wrong Password");
-        }
-    } else {
-        isAdmin = false;
-        location.reload();
-    }
-};
-
-function enableEditing(enable) {
-    const editables = document.querySelectorAll('.wing-score, .event-date, .event-time, .event-desc, .comp-title');
-    editables.forEach(el => {
-        el.contentEditable = enable ? "true" : "false";
-        if (enable) {
-            el.classList.add('editable-active');
-            el.style.pointerEvents = "auto";
-        } else {
-            el.classList.remove('editable-active');
-            el.style.pointerEvents = "none";
-        }
+/* -------------------- ADD RESULT LOGIC (UPDATED) -------------------- */
+window.updateProgramList = function() {
+    const section = document.getElementById('new-section').value;
+    const select = document.getElementById('new-program-select');
+    select.innerHTML = "";
+    
+    const programs = PROGRAM_LIST[section] || ["Other"];
+    programs.forEach(prog => {
+        const option = document.createElement("option");
+        option.value = prog;
+        option.text = prog;
+        select.appendChild(option);
     });
 }
-
-/* -------------------- 5. PUBLISH MANUAL EDITS -------------------- */
-window.pushToFirebase = function () {
-    if (!isAdmin) return;
-    const n = parseInt(document.querySelector('.nexara .wing-score').innerText) || 0;
-    const i = parseInt(document.querySelector('.ignara .wing-score').innerText) || 0;
-    const z = parseInt(document.querySelector('.sonara .wing-score').innerText) || 0;
-    const l = parseInt(document.querySelector('.lunara .wing-score').innerText) || 0;
-    const manualScores = { Nexara: n, Ignara: i, Zonara: z, Lunara: l };
-    
-    set(ref(db, 'scores'), manualScores)
-        .then(() => alert("Scores Updated & Published Live!"))
-        .catch((error) => alert("Error: " + error));
-};
-
-/* -------------------- 6. ADD DATA POPUP -------------------- */
-let currentMode = "result";
 
 window.confirmAdd = function () {
     if (currentMode === 'result') saveNewResult();
@@ -185,43 +140,38 @@ window.confirmAdd = function () {
 
 function saveNewResult() {
     const sectionId = document.getElementById('new-section').value;
-    const program = document.getElementById('new-title').value;
-    const category = document.getElementById('new-cat').value; // Reads the Dropdown Value
+    const program = document.getElementById('new-program-select').value;
+    const category = document.getElementById('new-cat').value;
+    const type = document.getElementById('new-type').value; // Single or Group
 
-    // Helper to format chest no
-    const getChest = (id) => {
-        const val = document.getElementById(id).value;
-        return val ? `(C:${val})` : "";
+    // Define Points based on Type
+    const pt = type === 'group' ? {1:10, 2:5, 3:3} : {1:5, 2:3, 3:1};
+
+    // Gather Data
+    const r1 = { wing: document.getElementById('new-rank1').value, name: document.getElementById('name-1').value, tieWing: document.getElementById('new-rank1-tie').value, tieName: document.getElementById('name-1-tie').value };
+    const r2 = { wing: document.getElementById('new-rank2').value, name: document.getElementById('name-2').value, tieWing: document.getElementById('new-rank2-tie').value, tieName: document.getElementById('name-2-tie').value };
+    const r3 = { wing: document.getElementById('new-rank3').value, name: document.getElementById('name-3').value, tieWing: document.getElementById('new-rank3-tie').value, tieName: document.getElementById('name-3-tie').value };
+
+    if (!program) return alert("Select a program");
+
+    // Helper to Add Points
+    const addScore = (wing, points) => {
+        if(wing) currentScores[wing] = (currentScores[wing] || 0) + points;
     };
 
-    const r1 = { 
-        wing: document.getElementById('new-rank1').value, 
-        name: document.getElementById('name-1').value,
-        chest: getChest('chest-1')
-    };
-    const r2 = { 
-        wing: document.getElementById('new-rank2').value, 
-        name: document.getElementById('name-2').value,
-        chest: getChest('chest-2')
-    };
-    const r3 = { 
-        wing: document.getElementById('new-rank3').value, 
-        name: document.getElementById('name-3').value,
-        chest: getChest('chest-3')
-    };
-
-    if (!program) return alert("Please enter Program Name");
-
-    // Auto-Calculate Scores
-    if (r1.wing) currentScores[r1.wing] = (currentScores[r1.wing] || 0) + POINTS.first;
-    if (r2.wing) currentScores[r2.wing] = (currentScores[r2.wing] || 0) + POINTS.second;
-    if (r3.wing) currentScores[r3.wing] = (currentScores[r3.wing] || 0) + POINTS.third;
+    // Calculate Points (Handling Ties)
+    addScore(r1.wing, pt[1]); addScore(r1.tieWing, pt[1]);
+    addScore(r2.wing, pt[2]); addScore(r2.tieWing, pt[2]);
+    addScore(r3.wing, pt[3]); addScore(r3.tieWing, pt[3]);
 
     // Save to Firebase
-    push(ref(db, 'results'), { sectionId, program, category, first: r1, second: r2, third: r3 });
+    push(ref(db, 'results'), { 
+        sectionId, program, category, type,
+        first: r1, second: r2, third: r3 
+    });
     set(ref(db, 'scores'), currentScores);
 
-    alert("Result Added & Scores Updated!");
+    alert("Result Added & Points Calculated!");
 }
 
 function saveNewEvent() {
@@ -233,7 +183,37 @@ function saveNewEvent() {
     alert("Event Added!");
 }
 
-/* -------------------- 7. UI HELPERS -------------------- */
+/* -------------------- ADMIN & UI -------------------- */
+window.toggleAdminMode = function () {
+    if (!isAdmin) {
+        const pass = prompt("Enter Admin Password:");
+        if (pass === ADMIN_PASSWORD) {
+            isAdmin = true;
+            document.querySelector('.admin-controls').classList.add('unlocked');
+            document.getElementById('add-res-btn').style.display = 'inline-block';
+            document.getElementById('add-evt-btn').style.display = 'inline-block';
+            document.getElementById('save-btn').style.display = 'inline-block';
+            document.getElementById('reset-btn').style.display = 'inline-block';
+            document.getElementById('admin-lock-btn').innerText = "🔓 LOGOUT";
+            alert("Admin Mode Unlocked.");
+        } else {
+            alert("Wrong Password");
+        }
+    } else {
+        isAdmin = false;
+        location.reload();
+    }
+};
+
+function enableEditing(enable) {
+    // Basic editing is disabled in this version to rely on the Add Modal for accuracy
+}
+
+window.pushToFirebase = function () {
+    if (!isAdmin) return;
+    set(ref(db, 'scores'), currentScores).then(() => alert("Synced!"));
+};
+
 window.openTab = function (tabName) {
     document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -250,7 +230,7 @@ window.openModal = function (type) {
 window.closeModal = function () { document.getElementById('addModal').style.display = 'none'; };
 window.resetData = function () { if (confirm("DELETE ALL DATA?")) { set(ref(db, 'scores'), { Nexara: 0, Ignara: 0, Zonara: 0, Lunara: 0 }); set(ref(db, 'results'), null); set(ref(db, 'events'), null); location.reload(); } };
 
-/* -------------------- 8. BACKGROUND ANIMATION -------------------- */
+// --- BUBBLES ---
 const canvas = document.getElementById('bg-canvas');
 const ctx = canvas.getContext('2d');
 let width, height, particles;
