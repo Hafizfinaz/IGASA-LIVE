@@ -381,16 +381,20 @@ function addResultHTML(key, data) {
     
     // Create winners HTML
     const createWinnerLines = (rank, winners) => {
-        if (!winners || winners.length === 0) return '';
-        return winners.map(w => `
+    if (!winners || winners.length === 0) return '';
+    return winners.map(w => {
+        // Remove the "(C:" prefix and ")" suffix from chest number
+        const chestNo = w.chest ? w.chest.replace('(C:', '').replace(')', '') : '';
+        return `
             <div class="winner-line rank-${rank}">
                 <span class="w-rank">${rank === 1 ? '1st' : rank === 2 ? '2nd' : '3rd'}:</span>
                 <span class="w-house">${w.wing || ""}</span> - 
                 <span class="w-name">${w.name || ""}</span>
-                <span class="w-chest">${w.chest || ""}</span>
+                ${chestNo ? `<span class="w-chest">${chestNo}</span>` : ''}
             </div>
-        `).join('');
-    };
+        `;
+    }).join('');
+};
 
     const editBtn = isAdmin ? `<button class="edit-result-btn" onclick="window.openEditModal('${key}')">✏️ Edit</button>` : '';
     
@@ -779,3 +783,4 @@ class Particle {
 function initParticles() { particles = []; const count = window.innerWidth < 768 ? 30 : 60; for (let i = 0; i < count; i++) particles.push(new Particle()); }
 function animate() { ctx.clearRect(0, 0, width, height); for (let i = 0; i < particles.length; i++) { particles[i].update(); particles[i].draw(); } requestAnimationFrame(animate); }
 window.addEventListener('resize', () => { resize(); initParticles(); }); resize(); initParticles(); animate();
+
