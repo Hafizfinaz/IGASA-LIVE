@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -116,6 +116,179 @@
             <div class="modal-actions">
                 <button class="modal-btn" style="background:#333; color:#fff;" onclick="window.closeModal()">Cancel</button>
                 <button class="modal-btn btn-confirm" onclick="window.confirmAdd()">Add</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html> -->
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IMAM GAZZALI ACADEMY - IGASA Fest 2k25</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <canvas id="bg-canvas"></canvas>
+    <div class="header">
+        <div class="side-logo"> 
+            <img src="left-logo.png" alt="Left Logo" class="logo-img"> 
+        </div>
+        <div class="title-container">
+            <div class="main-logo"> 
+                <img src="kun fayakun logo.png" alt="Main Logo" class="logo-img"> 
+            </div>
+            <div class="fest-name">Imam Gazzali Academy Students' Association</div>
+            <div class="tagline">YAKUN IGASA FEST 2K25</div>
+        </div>
+        <div class="side-logo"> 
+            <img src="right-logo.png" alt="Right Logo" class="logo-img"> 
+        </div>
+    </div>
+
+    <div class="scoreboard" id="scoreboard-container">
+        <div class="wing-box nexara"><h3 class="wing-name">Nexara</h3><div class="wing-score" contenteditable="false">1200</div></div>
+        <div class="wing-box ignara"><h3 class="wing-name">Ignara</h3><div class="wing-score" contenteditable="false">1150</div></div>
+        <div class="wing-box sonara"><h3 class="wing-name">Zonara</h3><div class="wing-score" contenteditable="false">980</div></div>
+        <div class="wing-box lunara"><h3 class="wing-name">Lunara</h3><div class="wing-score" contenteditable="false">1300</div></div>
+    </div>
+
+    <div class="tabs-nav">
+        <button class="tab-btn active" onclick="window.openTab('results')">RESULTS</button>
+        <button class="tab-btn" onclick="window.openTab('events')">EVENTS</button>
+    </div>
+
+    <div id="results" class="tab-content active">
+        <div class="content-box">
+            <h2 class="section-title">COMPETITION RESULTS</h2>
+            <div id="results-main-container">
+                <div class="category-section"><h3 class="cat-header">GENERAL</h3><div id="list-general"></div></div>
+                <div class="category-section"><h3 class="cat-header">SENIOR</h3><div id="list-senior"></div></div>
+                <div class="category-section"><h3 class="cat-header">JUNIOR</h3><div id="list-junior"></div></div>
+                <div class="category-section"><h3 class="cat-header">SUB JUNIOR</h3><div id="list-subjunior"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="events" class="tab-content">
+        <div class="content-box">
+            <h2 class="section-title">Event Schedule</h2>
+            <div id="events-list">
+                <div class="event-item">
+                    <div class="event-date" contenteditable="false">Jan 10</div>
+                    <div class="event-time" contenteditable="false">09:00 AM</div>
+                    <div class="event-desc" contenteditable="false">Opening Ceremony</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-controls">
+        <button id="add-res-btn" class="admin-btn" onclick="window.openModal('result')">➕ ADD RESULT</button>
+        <button id="add-evt-btn" class="admin-btn" onclick="window.openModal('event')">➕ ADD EVENT</button>
+        <button id="save-btn" class="admin-btn" onclick="window.pushToFirebase()">☁ PUBLISH LIVE</button>
+        <button id="reset-btn" class="admin-btn" onclick="window.resetData()">⚠ RESET</button>
+        <button id="admin-lock-btn" class="admin-btn" onclick="window.toggleAdminMode()">🔒 ADMIN</button>
+    </div>
+
+    <!-- Add Result Modal -->
+    <div id="addModal" class="modal">
+        <div class="modal-content">
+            <h3 id="modal-title" style="color:var(--neon-red); text-align:center; margin:0;">ADD RESULT</h3>
+            
+            <div id="result-inputs" style="display:none; flex-direction:column; gap:10px;">
+                <label style="color:#aaa; font-size:0.9em;">Select Section:</label>
+                <select id="new-section" class="modal-select">
+                    <option value="list-general">General</option>
+                    <option value="list-senior">Senior</option>
+                    <option value="list-junior">Junior</option>
+                    <option value="list-subjunior">Sub Junior</option>
+                </select>
+                
+                <input type="text" id="new-title" class="modal-input" placeholder="Program Name">
+                
+                <label style="color:#aaa; font-size:0.9em; margin-top:5px;">Category:</label>
+                <select id="new-cat" class="modal-select">
+                    <option value="Sports">Sports</option>
+                    <option value="Stage">Stage</option>
+                    <option value="Non-Stage">Non-Stage</option>
+                </select>
+
+                <label style="color:#aaa; font-size:0.9em; margin-top:5px;">Program Type:</label>
+                <select id="program-type" class="modal-select">
+                    <option value="individual">Individual (5-3-1 points)</option>
+                    <option value="group">Group (10-5-3 points)</option>
+                </select>
+                
+                <h4 style="margin:10px 0 5px 0; color:#aaa; font-size:0.9em;">1st Place:</h4>
+                <div id="first-place-container"></div>
+                <button type="button" class="add-more-btn" onclick="window.addWinnerInput('first')">+ Add Another 1st Place</button>
+
+                <h4 style="margin:10px 0 5px 0; color:#aaa; font-size:0.9em;">2nd Place:</h4>
+                <div id="second-place-container"></div>
+                <button type="button" class="add-more-btn" onclick="window.addWinnerInput('second')">+ Add Another 2nd Place</button>
+
+                <h4 style="margin:10px 0 5px 0; color:#aaa; font-size:0.9em;">3rd Place:</h4>
+                <div id="third-place-container"></div>
+                <button type="button" class="add-more-btn" onclick="window.addWinnerInput('third')">+ Add Another 3rd Place</button>
+            </div>
+
+            <div id="event-inputs" style="display:none; flex-direction:column; gap:10px;">
+                <input type="text" id="new-date" class="modal-input" placeholder="Date (e.g. Jan 10)">
+                <input type="text" id="new-time" class="modal-input" placeholder="Time (e.g. 10:00 AM)">
+                <input type="text" id="new-desc" class="modal-input" placeholder="Event Description">
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn" style="background:#333; color:#fff;" onclick="window.closeModal()">Cancel</button>
+                <button class="modal-btn btn-confirm" onclick="window.confirmAdd()">Add</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Result Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <h3 style="color:var(--neon-red); text-align:center; margin:0;">EDIT RESULT</h3>
+            
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                <input type="text" id="edit-title" class="modal-input" placeholder="Program Name">
+                
+                <label style="color:#aaa; font-size:0.9em;">Category:</label>
+                <select id="edit-cat" class="modal-select">
+                    <option value="Sports">Sports</option>
+                    <option value="Stage">Stage</option>
+                    <option value="Non-Stage">Non-Stage</option>
+                </select>
+
+                <label style="color:#aaa; font-size:0.9em;">Program Type:</label>
+                <select id="edit-program-type" class="modal-select">
+                    <option value="individual">Individual (5-3-1 points)</option>
+                    <option value="group">Group (10-5-3 points)</option>
+                </select>
+                
+                <h4 style="margin:10px 0 5px 0; color:#aaa; font-size:0.9em;">1st Place:</h4>
+                <div id="edit-first-place-container"></div>
+                <button type="button" class="add-more-btn" onclick="window.addEditWinnerInput('first')">+ Add Another 1st Place</button>
+
+                <h4 style="margin:10px 0 5px 0; color:#aaa; font-size:0.9em;">2nd Place:</h4>
+                <div id="edit-second-place-container"></div>
+                <button type="button" class="add-more-btn" onclick="window.addEditWinnerInput('second')">+ Add Another 2nd Place</button>
+
+                <h4 style="margin:10px 0 5px 0; color:#aaa; font-size:0.9em;">3rd Place:</h4>
+                <div id="edit-third-place-container"></div>
+                <button type="button" class="add-more-btn" onclick="window.addEditWinnerInput('third')">+ Add Another 3rd Place</button>
+            </div>
+
+            <div class="modal-actions">
+                <button class="modal-btn" style="background:#d32f2f; color:#fff;" onclick="window.deleteResult()">Delete</button>
+                <button class="modal-btn" style="background:#333; color:#fff;" onclick="window.closeEditModal()">Cancel</button>
+                <button class="modal-btn btn-confirm" onclick="window.saveEdit()">Save</button>
             </div>
         </div>
     </div>
