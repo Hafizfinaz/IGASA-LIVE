@@ -632,6 +632,43 @@ window.openEditModal = function(key) {
     document.getElementById('edit-third-place-container').innerHTML = '';
     
     // Populate winners
+    // if (data.first) {
+    //     data.first.forEach(w => {
+    //         addEditWinnerInput('first');
+    //         const container = document.getElementById('edit-first-place-container');
+    //         const lastGroup = container.lastElementChild;
+    //         lastGroup.querySelector('.winner-wing').value = w.wing;
+    //         lastGroup.querySelector('.winner-name').value = w.name;
+    //         const chestNo = w.chest.replace('(C:', '').replace(')', '');
+    //         lastGroup.querySelector('.winner-chest').value = chestNo;
+    //     });
+    // }
+    
+    // if (data.second) {
+    //     data.second.forEach(w => {
+    //         addEditWinnerInput('second');
+    //         const container = document.getElementById('edit-second-place-container');
+    //         const lastGroup = container.lastElementChild;
+    //         lastGroup.querySelector('.winner-wing').value = w.wing;
+    //         lastGroup.querySelector('.winner-name').value = w.name;
+    //         const chestNo = w.chest.replace('(C:', '').replace(')', '');
+    //         lastGroup.querySelector('.winner-chest').value = chestNo;
+    //     });
+    // }
+    
+    // if (data.third) {
+    //     data.third.forEach(w => {
+    //         addEditWinnerInput('third');
+    //         const container = document.getElementById('edit-third-place-container');
+    //         const lastGroup = container.lastElementChild;
+    //         lastGroup.querySelector('.winner-wing').value = w.wing;
+    //         lastGroup.querySelector('.winner-name').value = w.name;
+    //         const chestNo = w.chest.replace('(C:', '').replace(')', '');
+    //         lastGroup.querySelector('.winner-chest').value = chestNo;
+    //     });
+    // }
+
+    // Populate winners
     if (data.first) {
         data.first.forEach(w => {
             addEditWinnerInput('first');
@@ -639,9 +676,11 @@ window.openEditModal = function(key) {
             const lastGroup = container.lastElementChild;
             lastGroup.querySelector('.winner-wing').value = w.wing;
             lastGroup.querySelector('.winner-name').value = w.name;
-            const chestNo = w.chest.replace('(C:', '').replace(')', '');
+            const chestNo = w.chest ? w.chest.replace('(C:', '').replace(')', '') : '';
             lastGroup.querySelector('.winner-chest').value = chestNo;
         });
+    } else {
+        addEditWinnerInput('first');
     }
     
     if (data.second) {
@@ -651,9 +690,11 @@ window.openEditModal = function(key) {
             const lastGroup = container.lastElementChild;
             lastGroup.querySelector('.winner-wing').value = w.wing;
             lastGroup.querySelector('.winner-name').value = w.name;
-            const chestNo = w.chest.replace('(C:', '').replace(')', '');
+            const chestNo = w.chest ? w.chest.replace('(C:', '').replace(')', '') : '';
             lastGroup.querySelector('.winner-chest').value = chestNo;
         });
+    } else {
+        addEditWinnerInput('second');
     }
     
     if (data.third) {
@@ -663,9 +704,11 @@ window.openEditModal = function(key) {
             const lastGroup = container.lastElementChild;
             lastGroup.querySelector('.winner-wing').value = w.wing;
             lastGroup.querySelector('.winner-name').value = w.name;
-            const chestNo = w.chest.replace('(C:', '').replace(')', '');
+            const chestNo = w.chest ? w.chest.replace('(C:', '').replace(')', '') : '';
             lastGroup.querySelector('.winner-chest').value = chestNo;
         });
+    } else {
+        addEditWinnerInput('third');
     }
     
     document.getElementById('editModal').style.display = 'flex';
