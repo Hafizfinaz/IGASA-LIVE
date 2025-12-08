@@ -22,7 +22,7 @@ let currentScores = { Nexara: 0, Ignara: 0, Zonara: 0, Lunara: 0 };
 let allResultsData = {};
 let isAdmin = false;
 const ADMIN_PASSWORD = "yakun123igasa"; // CHANGE THIS!
-const POINTS = { first: 10, second: 7, third: 5 };
+const POINTS = { first: 5, second: 3, third: 1 };
 
 /* -------------------- 1. EMERGENCY LOCK ON LOAD -------------------- */
 document.addEventListener("DOMContentLoaded", function () {
@@ -298,4 +298,5 @@ if (canvas) {
     function animate() { ctx.clearRect(0, 0, width, height); for (let i = 0; i < particles.length; i++) { particles[i].update(); particles[i].draw(); } requestAnimationFrame(animate); }
     window.addEventListener('resize', () => { resize(); initParticles(); }); resize(); initParticles(); animate();
 }
+
 
