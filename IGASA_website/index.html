@@ -73,13 +73,24 @@
     <div id="addModal" class="modal">
         <div class="modal-content">
             <h3 id="modal-title" style="color:var(--neon-red); text-align:center; margin:0;">ADD</h3>
+            
             <div id="result-inputs" style="display:none; flex-direction:column; gap:10px;">
                 <label style="color:#aaa; font-size:0.9em;">Select Section:</label>
                 <select id="new-section" class="modal-select">
-                    <option value="list-general">General</option><option value="list-senior">Senior</option><option value="list-junior">Junior</option><option value="list-subjunior">Sub Junior</option>
+                    <option value="list-general">General</option>
+                    <option value="list-senior">Senior</option>
+                    <option value="list-junior">Junior</option>
+                    <option value="list-subjunior">Sub Junior</option>
                 </select>
+                
                 <input type="text" id="new-title" class="modal-input" placeholder="Program Name">
-                <input type="text" id="new-cat" class="modal-input" placeholder="Category (e.g. Stage)">
+                
+                <label style="color:#aaa; font-size:0.9em; margin-top:5px;">Category:</label>
+                <select id="new-cat" class="modal-select">
+                    <option value="Sports">Sports</option>
+                    <option value="Stage">Stage</option>
+                    <option value="Non-Stage">Non-Stage</option>
+                </select>
                 <h4 style="margin:5px 0 0 0; color:#aaa; font-size:0.9em;">1st Place:</h4>
                 <div class="input-group">
                     <select id="new-rank1" class="modal-select"><option value="Nexara">Nexara</option><option value="Ignara">Ignara</option><option value="Zonara">Zonara</option><option value="Lunara">Lunara</option></select>
@@ -96,6 +107,7 @@
                     <input type="text" id="name-3" class="modal-input" placeholder="Name"><input type="text" id="chest-3" class="modal-input" placeholder="Chest No" style="width:80px;">
                 </div>
             </div>
+
             <div id="event-inputs" style="display:none; flex-direction:column; gap:10px;">
                 <input type="text" id="new-date" class="modal-input" placeholder="Date (e.g. Jan 10)">
                 <input type="text" id="new-time" class="modal-input" placeholder="Time (e.g. 10:00 AM)">
